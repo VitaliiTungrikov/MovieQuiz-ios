@@ -1,97 +1,100 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, AlertPresenterDelegate {
-    
-    
-    
+
+
+
     @IBOutlet private var imageView: UIImageView!
     @IBOutlet private var textLabel: UILabel!
     @IBOutlet private var counterLabel: UILabel!
-    
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
+
     // переменная с индексом текущего вопроса, начальное значение 0
     // (по этому индексу будем искать вопрос в массиве, где индекс первого элемента 0, а не 1)
     private var currentQuestionIndex = 0
-    
+
     // переменная со счётчиком правильных ответов, начальное значение закономерно 0
     private var correctAnswers = 0
     private let questionsAmount: Int = 10
-    private let questionFactory: QuestionFactoryProtocol = QuestionFactory()
+    private var questionFactory: QuestionFactory!
     private var currentQuestion: QuizQuestion?
     private let alertPresenter: AlertPresenterProtocol = AlertPresenter()
-    private let statisticService: IStatisticService = StatisticService()
+    private var statisticService: IStatisticService = StatisticService()
 
     // MARK: - Lifecycle
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        questionFactory.delegate = self
-        questionFactory.requestNextQuestion()
-        alertPresenter.delegate = self
-        
+
+        imageView.layer.cornerRadius = 20
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        statisticService = StatisticService()
+        showLoadingIndicator()
+        questionFactory.loadData()
+
     }
-    
+
     // MARK: - QuestionFactoryDelegate
-    
+
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question = question else {
             return
         }
-        
+
         currentQuestion = question
         let viewModel = convert(model: question)
         DispatchQueue.main.async { [weak self] in
             self?.show(quiz: viewModel)
         }
     }
-    
+
     // MARK: - AlertPresenterDelegate
-    
+
     func showAlert(alert: UIAlertController) {
         self.present(alert, animated: true)
     }
-    
+
     // MARK: - Metods
-    
+
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         sender.isEnabled = false
         guard let currentQuestion = currentQuestion else {
             return
         }
         let givenAnswer = true // 2
-        
+
         showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer) // 3
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {sender.isEnabled = true}
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {sender.isEnabled = true}
     }
-    
-    
+
+
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         sender.isEnabled = false
         guard let currentQuestion = currentQuestion else {
             return
         }
         let givenAnswer = false // 2
-        
+
         showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer) // 3
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {sender.isEnabled = true}
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {sender.isEnabled = true}
     }
-    
+
     // приватный метод конвертации, который принимает моковый вопрос и возвращает вью модель для главного экрана
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel(
-            image: UIImage(named: model.image) ?? UIImage(),
+            image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
         return questionStep
     }
-    
+
     // приватный метод вывода на экран вопроса, который принимает на вход вью модель вопроса и ничего не возвращает
     private func show(quiz step: QuizStepViewModel) {
         imageView.image = step.image
         textLabel.text = step.question
         counterLabel.text = step.questionNumber
     }
-    
+
     // приватный метод, который меняет цвет рамки
     // принимает на вход булевое значение и ничего не возвращает
     private func showAnswerResult(isCorrect: Bool) {
@@ -110,7 +113,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             self.showNextQuestionOrResults()
         }
     }
-    
+
     // приватный метод, который содержит логику перехода в один из сценариев
     // метод ничего не принимает и ничего не возвращает
     private func showNextQuestionOrResults() {
@@ -139,7 +142,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             self.questionFactory.requestNextQuestion()
         }
     }
-    
+
     private func show(quiz viewModel: QuizResultsViewModel) {
         let alertModel = AlertModel(
             title: viewModel.title,
@@ -153,5 +156,40 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         )
         alertPresenter.show(alertModel: alertModel)
     }
-        
+
+    private func showLoadingIndicator() {
+        activityIndicator.isHidden = false // говорим, что индикатор загрузки не скрыт
+        activityIndicator.startAnimating() // включаем анимацию
+    }
+
+    private func hideLoadingIndicator() {
+        activityIndicator.isHidden = true // говорим, что индикатор загрузки скрыт
+        activityIndicator.stopAnimating() // выключаем анимацию
+    }
+
+    private func showNetworkError(message: String) {
+        hideLoadingIndicator()
+
+        let model = AlertModel(title: "Ошибка",
+                               message: message,
+                               buttonText: "Попробовать еще раз") { [weak self] in
+            guard let self = self else { return }
+
+            self.currentQuestionIndex = 0
+            self.correctAnswers = 0
+
+            self.questionFactory.requestNextQuestion()
+        }
+
+        alertPresenter.show(alertModel: model)
+    }
+
+    func didFailToLoadData(with error: Error) {
+        showNetworkError(message: error.localizedDescription) // возьмём в качестве сообщения описание ошибки
+    }
+
+    func didLoadDataFromServer() {
+        activityIndicator.isHidden = true // скрываем индикатор загрузки
+        questionFactory.requestNextQuestion()
+    }
 }
