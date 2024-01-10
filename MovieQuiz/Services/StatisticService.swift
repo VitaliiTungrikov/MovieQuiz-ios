@@ -67,6 +67,5 @@ final class StatisticService: IStatisticService {
 
         totalAccuracy = (totalAccuracy + Double(count)) / Double(amount)
 
-
     }
 }

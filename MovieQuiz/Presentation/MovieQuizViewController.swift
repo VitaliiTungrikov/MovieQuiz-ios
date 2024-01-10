@@ -25,6 +25,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        alertPresenter.delegate = self
 
         imageView.layer.cornerRadius = 20
         questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
