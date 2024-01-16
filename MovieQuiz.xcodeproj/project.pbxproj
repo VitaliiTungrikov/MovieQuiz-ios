@@ -117,12 +117,12 @@
 		8F4738322848DE2A005DF65E /* Presentation */ = {
 			isa = PBXGroup;
 			children = (
+				84515DA92B568FBD0034929E /* MovieQuizPresenter.swift */,
 				AD1ABAB52831907B00B3E448 /* MovieQuizViewController.swift */,
 				AD1ABAB72831907B00B3E448 /* Main.storyboard */,
 				841795D12B4441E400BBACE9 /* AlertPresenter.swift */,
 				841795D72B44445D00BBACE9 /* AlertPresenterProtocol.swift */,
 				841795D32B44422B00BBACE9 /* AlertPresenterDelegate.swift */,
-				84515DA92B568FBD0034929E /* MovieQuizPresenter.swift */,
 			);
 			path = Presentation;
 			sourceTree = "<group>";
