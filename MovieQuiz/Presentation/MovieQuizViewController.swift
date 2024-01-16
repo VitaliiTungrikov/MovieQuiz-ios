@@ -4,11 +4,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
 
 
 
-    @IBOutlet private var imageView: UIImageView!
-    @IBOutlet private var textLabel: UILabel!
-    @IBOutlet private var counterLabel: UILabel!
-    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-
+    @IBOutlet private weak var imageView: UIImageView!
+    @IBOutlet private weak var textLabel: UILabel!
+    @IBOutlet private weak var counterLabel: UILabel!
+    @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
+    @IBOutlet private weak var yesButton: UIButton!
+    @IBOutlet private weak var noButton: UIButton!
     // переменная с индексом текущего вопроса, начальное значение 0
     // (по этому индексу будем искать вопрос в массиве, где индекс первого элемента 0, а не 1)
     private var currentQuestionIndex = 0
@@ -58,26 +59,24 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     // MARK: - Metods
 
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        sender.isEnabled = false
         guard let currentQuestion = currentQuestion else {
             return
         }
         let givenAnswer = true // 2
 
         showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer) // 3
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {sender.isEnabled = true}
+
     }
 
 
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        sender.isEnabled = false
         guard let currentQuestion = currentQuestion else {
             return
         }
         let givenAnswer = false // 2
 
         showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer) // 3
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {sender.isEnabled = true}
+
     }
 
     // приватный метод конвертации, который принимает моковый вопрос и возвращает вью модель для главного экрана
@@ -99,6 +98,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     // приватный метод, который меняет цвет рамки
     // принимает на вход булевое значение и ничего не возвращает
     private func showAnswerResult(isCorrect: Bool) {
+        // Блокировка кнопок
+        yesButton.isEnabled = false
+        noButton.isEnabled = false
+
         if isCorrect { // 1
             correctAnswers += 1 // 2
         }
@@ -112,6 +115,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in // слабая ссылка на self
             guard let self = self else { return } // разворачиваем слабую ссылку
             self.showNextQuestionOrResults()
+
+            // Разблокировка кнопок через 1 секунду
+            self.yesButton.isEnabled = true
+            self.noButton.isEnabled = true
         }
     }
 
