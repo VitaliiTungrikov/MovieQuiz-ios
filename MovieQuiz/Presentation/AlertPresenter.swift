@@ -16,8 +16,9 @@ final class AlertPresenter: AlertPresenterProtocol {
         let alert = UIAlertController(
             title: alertModel.title,
             message: alertModel.message,
-            preferredStyle: .alert
-        )
+            preferredStyle: .alert)
+        
+        
         let action = UIAlertAction(
             title: alertModel.buttonText,
             style: .default,
@@ -29,6 +30,7 @@ final class AlertPresenter: AlertPresenterProtocol {
         alert.addAction(action)
         
         delegate?.showAlert(alert: alert)
+        
     }
     
 }
